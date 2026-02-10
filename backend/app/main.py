@@ -13,7 +13,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000", "https://finance-tracker-ashy-iota.vercel.app",
     "https://finance-tracker-git-main-udieshs-projects.vercel.app",
-    "https://finance-tracker-7c97zp2go-udieshs-projects.vercel.app"],
+    "https://finance-tracker-8j7sc77lp-udieshs-projects.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
