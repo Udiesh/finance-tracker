@@ -11,15 +11,19 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "https://finance-tracker-ashy-iota.vercel.app",
+   allow_origins=[
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://finance-tracker-ashy-iota.vercel.app",
     "https://finance-tracker-git-main-udieshs-projects.vercel.app",
-    "https://finance-tracker-8j7sc77lp-udieshs-projects.vercel.app"],
+    "https://finance-tracker-qnw24rom7-udieshs-projects.vercel.app",
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
+app.include_router(auth.router, )
 app.include_router(category.router)
 app.include_router(transaction.router)
 app.include_router(ai.router)
