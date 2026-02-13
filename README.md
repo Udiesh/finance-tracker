@@ -2,60 +2,30 @@
 
 # 💰 Finance Tracker
 
-### *Take Control of Your Financial Future*
-
-A modern, full-stack personal finance management application built with React and Python
+*A modern personal finance management application*
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://finance-tracker-ashy-iota.vercel.app)
 [![GitHub](https://img.shields.io/badge/github-repo-blue?style=for-the-badge&logo=github)](https://github.com/Udiesh/finance-tracker)
-[![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge)](LICENSE)
 
-[Features](#-features) • [Demo](#-demo) • [Installation](#-installation) • [Tech Stack](#-tech-stack) • [API](#-api-documentation) • [Contributing](#-contributing)
+**[Live Demo](https://finance-tracker-ashy-iota.vercel.app)** • **[Tech Stack](#-tech-stack)** • **[Setup](#-local-setup)**
 
 </div>
 
 ---
 
-## 🌟 Overview
+## 📋 About
 
-Finance Tracker is a comprehensive personal finance management solution that helps you track income and expenses, visualize spending patterns, and make informed financial decisions. Built with modern web technologies, it offers a seamless experience across all devices.
+Finance Tracker is a full-stack web application I built to help manage personal finances. It allows users to track income and expenses, categorize transactions, and visualize spending patterns through interactive charts.
 
 ---
 
 ## ✨ Features
 
-### 💳 Transaction Management
-- **Add Transactions** - Record income and expenses with ease
-- **Edit & Delete** - Full CRUD operations on all transactions
-- **Smart Categorization** - Organize transactions by custom categories
-- **Date Tracking** - Monitor when money comes in and goes out
-
-### 📊 Data Visualization
-- **Interactive Charts** - Beautiful visualizations powered by Recharts
-- **Income vs Expense Analysis** - Compare your earnings and spending
-- **Category Breakdown** - See where your money goes
-- **Monthly Trends** - Track financial patterns over time
-- **Real-time Updates** - Charts update instantly as you add data
-
-### 🎨 User Experience
-- **Responsive Design** - Works flawlessly on desktop, tablet, and mobile
-- **Intuitive Interface** - Clean, modern UI built with Tailwind CSS
-- **Fast Performance** - Lightning-fast React with Vite bundling
-- **Smooth Navigation** - Seamless routing with React Router
-
----
-
-## 🎯 Demo
-
-**Live Application:** [finance-tracker-ashy-iota.vercel.app](https://finance-tracker-ashy-iota.vercel.app)
-
-### Screenshots
-
-*Add screenshots here to showcase your application*
-
-```
-[Dashboard View] [Add Transaction] [Analytics View]
-```
+- 💳 **Transaction Management** - Add, edit, and delete income & expense transactions
+- 📊 **Smart Categorization** - Organize transactions by custom categories
+- 📈 **Visual Analytics** - Interactive charts showing income vs expenses, category breakdowns, and monthly trends
+- 📱 **Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
+- ⚡ **Real-time Updates** - Charts and data update instantly as you add transactions
 
 ---
 
@@ -116,324 +86,76 @@ finance-tracker/
 
 ---
 
-## 🚀 Installation
+## 🚀 Local Setup
+
+Want to run this project locally? Follow these steps:
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
+- Node.js v16+
+- Python 3.9+
 
-- **Node.js** v16 or higher ([Download](https://nodejs.org/))
-- **Python** 3.9 or higher ([Download](https://www.python.org/downloads/))
-- **npm** or **yarn** (comes with Node.js)
-- **pip** (comes with Python)
-- **Git** ([Download](https://git-scm.com/))
+### Installation
 
-### Quick Start
-
-#### 1️⃣ Clone the Repository
-
+**1. Clone the repository**
 ```bash
 git clone https://github.com/Udiesh/finance-tracker.git
 cd finance-tracker
 ```
 
-#### 2️⃣ Frontend Setup
-
+**2. Frontend Setup**
 ```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install dependencies
 npm install
-
-# Create environment file
-cp .env.example .env
-
-# Start development server
 npm run dev
 ```
+Frontend runs at `http://localhost:5173`
 
-The frontend will be running at **http://localhost:5173**
-
-#### 3️⃣ Backend Setup
-
+**3. Backend Setup**
 ```bash
-# Navigate to backend directory (from project root)
 cd backend
-
-# Create virtual environment
 python -m venv venv
 
 # Activate virtual environment
-# Windows
-venv\Scripts\activate
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
 
-# macOS/Linux
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Create environment file
-cp .env.example .env
-
-# Run the server
 python main.py
 ```
+Backend runs at `http://localhost:8000`
 
-The backend will be running at **http://localhost:8000**
+### Environment Variables
 
----
-
-## ⚙️ Configuration
-
-### Frontend Environment Variables
-
-Create a `.env` file in the `frontend/` directory:
-
+**Frontend** (`frontend/.env`):
 ```env
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-### Backend Environment Variables
-
-Create a `.env` file in the `backend/` directory:
-
+**Backend** (`backend/.env`):
 ```env
-# Application Settings
+SECRET_KEY=your_secret_key
+DATABASE_URL=your_database_url
 DEBUG=True
-SECRET_KEY=your-secret-key-here
-
-# Database Configuration
-DATABASE_URL=your-database-url-here
-
-# API Configuration
-API_PORT=8000
-CORS_ORIGINS=http://localhost:5173
 ```
 
 ---
 
-## 📡 API Documentation
+## 🔌 API Endpoints
 
-### Base URL
-```
-http://localhost:8000/api
-```
-
-### Endpoints
-
-#### Get All Transactions
-```http
-GET /transactions
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "type": "income",
-    "amount": 5000,
-    "category": "Salary",
-    "description": "Monthly salary",
-    "date": "2026-02-01"
-  }
-]
-```
-
-#### Create Transaction
-```http
-POST /transactions
-```
-
-**Request Body:**
-```json
-{
-  "type": "expense",
-  "amount": 150,
-  "category": "Food",
-  "description": "Groceries",
-  "date": "2026-02-13"
-}
-```
-
-#### Update Transaction
-```http
-PUT /transactions/{id}
-```
-
-**Request Body:**
-```json
-{
-  "amount": 200,
-  "description": "Updated description"
-}
-```
-
-#### Delete Transaction
-```http
-DELETE /transactions/{id}
-```
-
-**Response:**
-```json
-{
-  "message": "Transaction deleted successfully"
-}
-```
-
----
-
-## 🎨 Available Scripts
-
-### Frontend
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-
-### Backend
-
-| Command | Description |
-|---------|-------------|
-| `python main.py` | Start development server |
-| `pip install -r requirements.txt` | Install dependencies |
-| `pip freeze > requirements.txt` | Update dependencies |
-
----
-
-## 🧪 Testing
-
-```bash
-# Frontend tests
-cd frontend
-npm test
-
-# Backend tests
-cd backend
-python -m pytest
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/transactions` | GET | Get all transactions |
+| `/transactions` | POST | Create new transaction |
+| `/transactions/{id}` | PUT | Update transaction |
+| `/transactions/{id}` | DELETE | Delete transaction |
 
 ---
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Configure environment variables
-4. Deploy!
-
-```bash
-# Or use Vercel CLI
-npm i -g vercel
-cd frontend
-vercel
-```
-
-### Backend
-
-The backend can be deployed to various platforms:
-
-- **Railway** - Simple Python deployment
-- **Render** - Free tier available
-- **Heroku** - Classic PaaS solution
-- **AWS/GCP/Azure** - Full control
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### How to Contribute
-
-1. **Fork the repository**
-   ```bash
-   # Click the 'Fork' button at the top right
-   ```
-
-2. **Clone your fork**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/finance-tracker.git
-   cd finance-tracker
-   ```
-
-3. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-
-4. **Make your changes**
-   - Write clean, readable code
-   - Follow the existing code style
-   - Add comments where necessary
-
-5. **Commit your changes**
-   ```bash
-   git add .
-   git commit -m "Add: amazing new feature"
-   ```
-   
-   **Commit Message Guidelines:**
-   - `Add:` for new features
-   - `Fix:` for bug fixes
-   - `Update:` for changes to existing features
-   - `Remove:` for removing features
-   - `Docs:` for documentation changes
-
-6. **Push to your fork**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-
-7. **Open a Pull Request**
-   - Go to the original repository
-   - Click "New Pull Request"
-   - Describe your changes clearly
-
-### Areas to Contribute
-
-- 🐛 Bug fixes
-- ✨ New features
-- 📝 Documentation improvements
-- 🎨 UI/UX enhancements
-- ⚡ Performance optimizations
-- 🧪 Test coverage
-
----
-
-## 🐛 Known Issues
-
-Check the [Issues](https://github.com/Udiesh/finance-tracker/issues) page for current bugs and feature requests.
-
----
-
-## 📝 Roadmap
-
-- [ ] User authentication & authorization
-- [ ] Budget planning and alerts
-- [ ] Recurring transactions
-- [ ] Export data (CSV, PDF)
-- [ ] Dark mode
-- [ ] Multi-currency support
-- [ ] Mobile app (React Native)
-- [ ] AI-powered insights
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License - you are free to use, modify, and distribute this software.
-```
+- **Frontend:** Deployed on [Vercel](https://vercel.com)
+- **Backend:** Ready for deployment on Railway, Render, or Heroku
 
 ---
 
@@ -442,39 +164,14 @@ MIT License - you are free to use, modify, and distribute this software.
 **Udiesh Kumar**
 
 - GitHub: [@Udiesh](https://github.com/Udiesh)
-- LinkedIn: [Add your LinkedIn]
-- Email: [Add your email]
+- Portfolio: [Your Portfolio URL]
 
 ---
-
-## 🙏 Acknowledgments
-
-- **React Team** - For the amazing framework
-- **Tailwind CSS** - For the utility-first CSS framework
-- **Recharts** - For beautiful, customizable charts
-- **Vercel** - For seamless deployment
-- **Open Source Community** - For inspiration and tools
-
----
-
-## 💬 Support
-
-If you have any questions or need help:
-
-- 📧 Email: [your-email@example.com]
-- 💬 Discussions: [GitHub Discussions](https://github.com/Udiesh/finance-tracker/discussions)
-- 🐛 Issues: [GitHub Issues](https://github.com/Udiesh/finance-tracker/issues)
-
----
-
-## ⭐ Show Your Support
-
-If this project helped you, please consider giving it a ⭐️!
 
 <div align="center">
 
-**Made with ❤️ by Udiesh Kumar**
+**Built with ❤️ using React & Python**
 
-[⬆ Back to Top](#-finance-tracker)
+⭐ Star this repo if you find it useful!
 
 </div>
