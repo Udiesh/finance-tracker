@@ -80,19 +80,9 @@ const Transactions = () => {
       });
       setShowModal(true);
       setAiText('');
-
-      const remaining = res.data.ai_remaining;
-      if (remaining !== undefined && remaining <= 5) {
-        toast.success(`Parsed! (${remaining} AI uses left today)`);
-      } else {
-        toast.success('AI parsed your input!');
-      }
+      toast.success('AI parsed your input!');
     } catch (err) {
-      if (err.response?.status === 429) {
-        toast.error(err.response.data.detail || 'AI limit reached for today');
-      } else {
-        toast.error('AI parsing failed');
-      }
+      toast.error('AI parsing failed');
     } finally {
       setAiLoading(false);
     }

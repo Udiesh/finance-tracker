@@ -1,25 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.models.category import Category
 from app.schemas.transaction import AITransactionInput
 from app.services.ai_service import parse_transaction_text
-from app.services.rate_limiter import ai_rate_limiter
 from app.auth.auth import get_current_user
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
-
-
-@router.get("/usage")
-def get_ai_usage(current_user: User = Depends(get_current_user)):
-    """Check how many AI parses the user has left today"""
-    remaining = ai_rate_limiter.get_remaining(current_user.id)
-    return {
-        "daily_limit": ai_rate_limiter.daily_limit,
-        "remaining": remaining,
-        "used": ai_rate_limiter.daily_limit - remaining,
-    }
 
 
 @router.post("/parse-transaction")
@@ -28,15 +16,11 @@ def parse_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Check rate limit BEFORE calling Groq
-    rate_check = ai_rate_limiter.check_and_increment(current_user.id)
-
-    if not rate_check["allowed"]:
-        raise HTTPException(
-            status_code=429,
-            detail=f"Daily AI limit reached ({ai_rate_limiter.daily_limit}/day). Resets at midnight UTC. You can still add transactions manually."
-        )
-
+    """
+    User sends natural language text.
+    We fetch their categories, send everything to Groq,
+    and return structured data that pre-fills the transaction form.
+    """
     user_categories = db.query(Category).filter(
         Category.user_id == current_user.id
     ).all()
@@ -44,6 +28,7 @@ def parse_transaction(
     category_names = [c.name for c in user_categories]
     result = parse_transaction_text(data.text, category_names)
 
+    # If AI matched a category name, find its ID for the frontend
     if "category" in result and "error" not in result:
         matched = next(
             (c for c in user_categories if c.name.lower() == result["category"].lower()),
@@ -51,8 +36,5 @@ def parse_transaction(
         )
         if matched:
             result["category_id"] = matched.id
-
-    # Include remaining usage in response
-    result["ai_remaining"] = rate_check["remaining"]
 
     return result
