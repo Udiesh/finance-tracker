@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import date
 from app.database import get_db
@@ -8,6 +8,8 @@ from app.models.transaction import Transaction
 from app.models.category import Category
 from app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
 from app.auth.auth import get_current_user
+from sqlalchemy import func, extract, case
+
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
 
@@ -18,11 +20,6 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Create a new transaction.
-    Verifies the category exists and belongs to this user
-    before creating — prevents linking to someone else's category.
-    """
     category = db.query(Category).filter(
         Category.id == data.category_id,
         Category.user_id == current_user.id
@@ -43,41 +40,32 @@ def create_transaction(
 def get_transactions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    category_id: Optional[int] = Query(None, description="Filter by category"),
-    type: Optional[str] = Query(None, description="Filter by 'income' or 'expense'"),
-    start_date: Optional[date] = Query(None, description="Filter from this date"),
-    end_date: Optional[date] = Query(None, description="Filter until this date"),
-    limit: int = Query(50, description="Number of results"),
-    offset: int = Query(0, description="Pagination offset")
+    category_id: Optional[int] = Query(None),
+    type: Optional[str] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    limit: int = Query(50),
+    offset: int = Query(0)
 ):
-    """
-    Get transactions with optional filters.
-    Supports filtering by category, type, date range
-    and pagination — essential for when users have 
-    hundreds of transactions.
-    """
-    query = db.query(Transaction).filter(Transaction.user_id == current_user.id)
+    # Single query with JOIN — no N+1 problem
+    query = (
+        db.query(Transaction, Category)
+        .join(Category, Transaction.category_id == Category.id)
+        .filter(Transaction.user_id == current_user.id)
+    )
 
     if category_id:
         query = query.filter(Transaction.category_id == category_id)
-
     if type:
-        query = query.join(Category).filter(Category.type == type)
-
+        query = query.filter(Category.type == type)
     if start_date:
         query = query.filter(Transaction.date >= start_date)
-
     if end_date:
         query = query.filter(Transaction.date <= end_date)
 
-    transactions = query.order_by(Transaction.date.desc()).offset(offset).limit(limit).all()
+    results = query.order_by(Transaction.date.desc()).offset(offset).limit(limit).all()
 
-    result = []
-    for t in transactions:
-        category = db.query(Category).filter(Category.id == t.category_id).first()
-        result.append(_build_response(t, category))
-
-    return result
+    return [_build_response(t, c) for t, c in results]
 
 
 @router.get("/summary")
@@ -87,14 +75,15 @@ def get_summary(
     month: Optional[int] = Query(None),
     year: Optional[int] = Query(None)
 ):
-    """
-    Returns total income, total expense, and balance.
-    Used by the dashboard to show the overview cards.
-    Can filter by month/year for monthly summaries.
-    """
-    from sqlalchemy import func, extract
-
-    query = db.query(Transaction).join(Category).filter(
+    # Single query with conditional aggregation instead of two separate queries
+    query = db.query(
+        func.coalesce(func.sum(
+            case((Category.type == "income", Transaction.amount), else_=0)
+        ), 0).label("total_income"),
+        func.coalesce(func.sum(
+            case((Category.type == "expense", Transaction.amount), else_=0)
+        ), 0).label("total_expense"),
+    ).join(Category, Transaction.category_id == Category.id).filter(
         Transaction.user_id == current_user.id
     )
 
@@ -104,18 +93,12 @@ def get_summary(
             extract("year", Transaction.date) == year
         )
 
-    income = query.filter(Category.type == "income").with_entities(
-        func.coalesce(func.sum(Transaction.amount), 0)
-    ).scalar()
-
-    expense = query.filter(Category.type == "expense").with_entities(
-        func.coalesce(func.sum(Transaction.amount), 0)
-    ).scalar()
+    result = query.one()
 
     return {
-        "total_income": float(income),
-        "total_expense": float(expense),
-        "balance": float(income - expense)
+        "total_income": float(result.total_income),
+        "total_expense": float(result.total_expense),
+        "balance": float(result.total_income - result.total_expense)
     }
 
 
@@ -125,40 +108,44 @@ def get_monthly_breakdown(
     current_user: User = Depends(get_current_user),
     year: Optional[int] = Query(None)
 ):
-    """
-    Returns income and expense totals grouped by month.
-    This powers the bar/line chart on the dashboard
-    showing spending trends over time.
-    """
-    from sqlalchemy import func, extract
     from datetime import datetime
 
     if not year:
         year = datetime.now().year
 
-    months = []
-    for month in range(1, 13):
-        query = db.query(Transaction).join(Category).filter(
+    # Single query instead of 24 separate queries
+    results = (
+        db.query(
+            extract("month", Transaction.date).label("month"),
+            func.coalesce(func.sum(
+                case((Category.type == "income", Transaction.amount), else_=0)
+            ), 0).label("income"),
+            func.coalesce(func.sum(
+                case((Category.type == "expense", Transaction.amount), else_=0)
+            ), 0).label("expense"),
+        )
+        .join(Category, Transaction.category_id == Category.id)
+        .filter(
             Transaction.user_id == current_user.id,
-            extract("month", Transaction.date) == month,
             extract("year", Transaction.date) == year
         )
+        .group_by(extract("month", Transaction.date))
+        .all()
+    )
 
-        income = query.filter(Category.type == "income").with_entities(
-            func.coalesce(func.sum(Transaction.amount), 0)
-        ).scalar()
+    # Build a lookup from query results
+    month_data = {int(r.month): {"income": float(r.income), "expense": float(r.expense)} for r in results}
 
-        expense = query.filter(Category.type == "expense").with_entities(
-            func.coalesce(func.sum(Transaction.amount), 0)
-        ).scalar()
+    # Return all 12 months, filling in zeros for months with no data
+    return [
+        {
+            "month": m,
+            "income": month_data.get(m, {}).get("income", 0),
+            "expense": month_data.get(m, {}).get("expense", 0),
+        }
+        for m in range(1, 13)
+    ]
 
-        months.append({
-            "month": month,
-            "income": float(income),
-            "expense": float(expense)
-        })
-
-    return months
 
 @router.get("/category-breakdown")
 def get_category_breakdown(
@@ -167,11 +154,6 @@ def get_category_breakdown(
     month: Optional[int] = Query(None),
     year: Optional[int] = Query(None)
 ):
-    """
-    Returns total amount spent per category.
-    Powers the pie chart on the dashboard.
-    """
-    from sqlalchemy import func, extract
     from datetime import datetime
 
     if not month:
@@ -201,6 +183,7 @@ def get_category_breakdown(
         for r in results
     ]
 
+
 @router.put("/{transaction_id}", response_model=TransactionResponse)
 def update_transaction(
     transaction_id: int,
@@ -208,7 +191,6 @@ def update_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Update a transaction — only if it belongs to this user"""
     transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == current_user.id
@@ -243,7 +225,6 @@ def delete_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete a transaction"""
     transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == current_user.id
@@ -257,13 +238,7 @@ def delete_transaction(
     return {"message": "Transaction deleted successfully"}
 
 
-
 def _build_response(transaction: Transaction, category: Category) -> dict:
-    """
-    Helper function that combines transaction data with 
-    its category info for the response. This way the frontend
-    gets category name and icon without making a separate API call.
-    """
     return {
         "id": transaction.id,
         "amount": transaction.amount,
