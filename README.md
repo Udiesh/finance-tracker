@@ -164,8 +164,6 @@ DEBUG=True
 **Udiesh Kumar**
 
 - GitHub: [@Udiesh](https://github.com/Udiesh)
-- Portfolio: [Your Portfolio URL]
-
 ---
 
 <div align="center">
